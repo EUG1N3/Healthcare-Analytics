@@ -4,11 +4,11 @@ patient_id,
 provider_id,
 department_id,
 encounter_date,
-TRIM(INITCAP(encounter_type)) AS encounter_type,
-TRIM(INITCAP(status)) AS encounter_status,
+{{ standardized ('encounter_type') }} AS encounter_type,
+{{ standardized ('status') }} AS encounter_status,
 admission_date,
 discharge_date,
-TRIM(chief_complaint) AS chief_complaint
+{{ remove_white_spaces ('chief_complaint') }} AS chief_complaint
 FROM source
 
 

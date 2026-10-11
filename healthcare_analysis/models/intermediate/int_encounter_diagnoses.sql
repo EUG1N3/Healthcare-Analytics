@@ -4,4 +4,4 @@ WITH diagnoses AS (SELECT * FROM {{ ref('stg_raw_encounter_diagnoses') }}),
 
    SELECT d.*, c.* except (diagnosis_id)
    FROM diagnoses AS d
-   JOIN codes AS c on d.diagnosis_id = c.diagnosis_id
+   LEFT JOIN codes AS c on d.diagnosis_id = c.diagnosis_id

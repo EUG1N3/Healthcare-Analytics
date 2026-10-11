@@ -15,7 +15,7 @@ CASE
     WHEN gender LIKE 'm%' THEN 'Male'
     ELSE NULL
 END AS gender,
-TRIM(INITCAP(state)) AS county,
+{{ standardized ('state')}} AS county,
 zip_code, 
 payer_id, 
 created_at,

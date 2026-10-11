@@ -3,9 +3,9 @@ WITH source AS (
 )
 SELECT
     provider_id,
-    concat(first_name, ' ', last_name) as provider_name,
+    CONCAT (first_name, ' ', last_name) AS provider_name,
     npi_number,
-    trim(initcap(specialty)) as specialty,
+    {{remove_white_spaces ('specialty')}} AS specialty,
     department_id,
     hire_date,
     is_active

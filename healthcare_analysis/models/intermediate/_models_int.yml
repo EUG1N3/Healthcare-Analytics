@@ -1,0 +1,70 @@
+
+version: 2
+
+models:
+  - name: int_all_encounters
+    description: "A joined table that keeps all records from stg_raw_encounters, stg_raw_encounter_procedures, and staging_raw_procedures"
+
+    columns:
+      - name: encounter_id
+        description: "Unique identifiers of encounters"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounters')
+              field: encounter_id
+
+      - name: patient_id
+        description: "Unique identifiers of patients"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounters')
+              field: patient_id
+
+      - name: provider_id
+        description: "Unique identifiers of providers"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounters')
+              field: provider_id
+
+      - name: department_id
+        description: "Unique identifiers of departments"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounters')
+              field: department_id
+
+  - name: int_encounter_diagnoses
+    description: "A joined table consisting of records from stg_raw_encounter_diagnoses and stg_raw_diagnosis_codes"
+
+    columns:
+      - name: encounter_diagnosis_id
+        description: "Unique identifiers of encounter diagnoses"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounter_diagnoses')
+              field: encounter_diagnosis_id
+
+      - name: encounter_id
+        description: "Unique identifiers of encounters"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_encounters')
+              field: encounter_id
+
+      - name: diagnosis_id
+        description: "Unique identifiers of diagnoses"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_raw_diagnosis_codes')
+              field: diagnosis_id
+          - relationships:
+              to: ref('stg_raw_encounter_diagnoses')
+              field: diagnosis_id
