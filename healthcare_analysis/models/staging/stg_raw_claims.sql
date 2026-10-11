@@ -7,6 +7,6 @@ claim_date,
 billed_amount, 
 allowed_amount,
 paid_amount,
-TRIM(INITCAP(claim_status)) AS claim_status,
-TRIM(denial_reason) AS denial_reason
+{{ standardized ('claim_status')}} AS claim_status,
+{{ remove_white_spaces ('denial_reason')}} AS denial_reason
 FROM source

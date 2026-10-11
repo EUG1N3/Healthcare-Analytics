@@ -2,5 +2,5 @@ WITH source AS (SELECT * FROM `healthcare-analytics-510014.Raw.raw_diagnosis_cod
 SELECT diagnosis_id, 
 icd10_code,
 diagnosis_description,
-TRIM(diagnosis_category) AS diagnosis_category
+{{ remove_white_spaces ('diagnosis_category') }} AS diagnosis_category
 FROM source
