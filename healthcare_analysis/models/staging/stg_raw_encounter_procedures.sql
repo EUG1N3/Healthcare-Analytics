@@ -1,4 +1,4 @@
-WITH source AS(SELECT * FROM `healthcare-analytics-510014.Raw.raw_encounter_procedures`)
+WITH source AS(SELECT * FROM `healthcare-analytics-510014.bronze.raw_encounter_procedures`)
 SELECT encounter_procedure_id,
 encounter_id,
 procedure_id,

@@ -1,4 +1,4 @@
-WITH source AS(SELECT * FROM `healthcare-analytics-510014.Raw.raw_patients`)
+WITH source AS(SELECT * FROM `healthcare-analytics-510014.bronze.raw_patients`)
 SELECT patient_id,
 INITCAP(TRIM(CONCAT(first_name, ' ', last_name))) AS patient_name,
 CASE

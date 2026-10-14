@@ -1,4 +1,4 @@
-WITH source AS(SELECT * FROM `healthcare-analytics-510014.Raw.raw_procedures`)
+WITH source AS(SELECT * FROM `healthcare-analytics-510014.bronze.raw_procedures`)
 SELECT procedure_id, 
 procedure_code, 
 {{remove_white_spaces('procedure_description')}} AS procedure_description,

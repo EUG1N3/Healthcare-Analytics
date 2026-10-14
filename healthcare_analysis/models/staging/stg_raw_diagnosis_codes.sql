@@ -1,4 +1,4 @@
-WITH source AS (SELECT * FROM `healthcare-analytics-510014.Raw.raw_diagnosis_codes`)
+WITH source AS (SELECT * FROM `healthcare-analytics-510014.bronze.raw_diagnosis_codes`)
 SELECT diagnosis_id, 
 icd10_code,
 diagnosis_description,
