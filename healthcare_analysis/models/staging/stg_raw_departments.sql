@@ -1,4 +1,4 @@
-WITH source AS(SELECT * FROM `healthcare-analytics-510014.Raw.raw_departments`)
+WITH source AS(SELECT * FROM `healthcare-analytics-510014.bronze.raw_departments`)
 SELECT department_id, 
 {{ remove_white_spaces ('department_name')}} AS department_name, 
 {{ remove_white_spaces ('location')}} AS location,

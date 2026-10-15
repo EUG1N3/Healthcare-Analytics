@@ -33,9 +33,16 @@ models:
   healthcare_analysis:
     # Config indicated by + and applies to all files under models/example/
     staging:
+    # Staging models pointing to your newly created bronze data having Data Transformed
+      +schema: silver
       +materialized: view
     marts:
+      # Final reporting layer deployed as gold with fct and dims habouring the Star Schema
+      +schema: gold
       +materialized: table
     intermediate:
+    # Core transformation layer deployed as silver
+      +schema: silver
       +materialized: view
+
 

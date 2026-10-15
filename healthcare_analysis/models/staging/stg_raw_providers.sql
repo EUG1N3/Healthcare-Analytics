@@ -1,5 +1,5 @@
 WITH source AS (
-    SELECT * FROM `healthcare-analytics-510014.Raw.raw_providers`
+    SELECT * FROM `healthcare-analytics-510014.bronze.raw_providers`
 )
 SELECT
     provider_id,
