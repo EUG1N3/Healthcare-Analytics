@@ -5,31 +5,50 @@ on:
     types: [closed]
     branches: [main]
 
+# Same group as the CI workflow: closing the PR cancels any in-flight CI run
+concurrency:
+  group: dbt-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   id-token: write
 
 jobs:
   cleanup:
+    name: Drop PR datasets
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event.pull_request.head.repo.full_name == github.repository
     env:
       PROJECT: ${{ vars.GCP_CI_PROJECT_ID }}
       PR: ${{ github.event.pull_request.number }}
     steps:
-      - uses: google-github-actions/auth@v2
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Drop this PR's datasets
         run: |
-          for ds in $(bq ls -d --project_id="$PROJECT" --max_results=1000 \
-                        --format=json | jq -r '.[].datasetReference.datasetId'); do
-            if [ "$ds" = "ci_pr_${PR}" ] || [[ "$ds" == ci_pr_${PR}_* ]]; then
-              echo "Dropping $ds"
-              bq rm -r -f -d "${PROJECT}:${ds}"
-            fi
+          set -euo pipefail
+          prefix="ci_pr_${PR}"
+
+          datasets=$(bq ls -d --project_id="$PROJECT" --max_results=1000 --format=json \
+            | jq -r --arg p "$prefix" \
+                '.[]?.datasetReference.datasetId
+                 | select(. == $p or startswith($p + "_"))')
+
+          if [ -z "$datasets" ]; then
+            echo "No datasets found for ${prefix}"
+            exit 0
+          fi
+
+          for ds in $datasets; do
+            echo "Dropping ${ds}"
+            bq rm -r -f -d "${PROJECT}:${ds}"
           done
