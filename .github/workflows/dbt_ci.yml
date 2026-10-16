@@ -1,0 +1,51 @@
+name: dbt CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: dbt-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write          # needed for Workload Identity Federation
+
+jobs:
+  ci:
+    name: Lint, build and test changed models
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_CI_PROJECT_ID }}
+      DBT_DATASET: ci_pr_${{ github.event.pull_request.number }}
+      BQ_LOCATION: ${{ vars.BQ_LOCATION }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+
+      - run: pip install -r requirements.txt
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - run: dbt deps
+
+      - name: Lint changed SQL
+        run: |
+          FILES=$(git diff --name-only --diff-filter=d origin/main...HEAD -- 'models/*.sql')
+          if [ -n "$FILES" ]; then sqlfluff lint $FILES; fi
+
+      - name: Build and test
+        run: |
+          echo "Running full architecture build in CI sandbox"
+          dbt build --target ci --profiles-dir .
