@@ -10,14 +10,13 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write   # Workload Identity Federation
+  id-token: write
 
 jobs:
   ci:
     name: Lint, build and test
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # Skip fork PRs (they can't get OIDC tokens or repo variables)
     if: github.event.pull_request.head.repo.full_name == github.repository
     env:
       GCP_PROJECT_ID: ${{ vars.GCP_CI_PROJECT_ID }}
@@ -26,29 +25,16 @@ jobs:
       DBT_PROJECT_DIR: ${{ github.workspace }}/healthcare_analysis
       DBT_PROFILES_DIR: ${{ github.workspace }}/healthcare_analysis
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Debug layout (remove once green)
-        run: |
-          echo "Workflow: dbt CI"
-          pwd
-          ls -la
-          ls -la healthcare_analysis
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Show dbt version
-        run: dbt --version
+      - run: pip install -r requirements.txt
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -56,20 +42,20 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
 
-      - name: dbt deps
-        run: dbt deps --project-dir healthcare_analysis --profiles-dir healthcare_analysis
+      - name: Who am I (temporary)
+        run: gcloud auth list
+
+      - run: dbt deps
 
       - name: Lint changed SQL
         working-directory: healthcare_analysis
         run: |
           FILES=$(git diff --relative --name-only --diff-filter=d origin/${{ github.base_ref }}...HEAD -- 'models/*.sql')
           if [ -n "$FILES" ]; then
-            echo "Linting:"
             echo "$FILES"
             sqlfluff lint $FILES
           else
             echo "No changed SQL files to lint."
           fi
 
-      - name: dbt build and test
-        run: dbt build --target ci --project-dir healthcare_analysis --profiles-dir healthcare_analysis
+      - run: dbt build --target ci
