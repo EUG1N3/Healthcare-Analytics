@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "0 3 * * *"   # daily at 03:00 UTC (default branch only)
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -26,26 +26,14 @@ jobs:
       DBT_PROJECT_DIR: ${{ github.workspace }}/healthcare_analysis
       DBT_PROFILES_DIR: ${{ github.workspace }}/healthcare_analysis
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Debug layout (remove once green)
-        run: |
-          pwd
-          ls -la
-          ls -la healthcare_analysis
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Show dbt version
-        run: dbt --version
+      - run: pip install -r requirements.txt
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -53,14 +41,12 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_PROD_SERVICE_ACCOUNT }}
 
-      - name: dbt deps
-        run: dbt deps
+      - name: Who am I (temporary)
+        run: gcloud auth list
 
-      - name: dbt build
-        run: dbt build --target prod
-
-      - name: dbt docs generate
-        run: dbt docs generate --target prod
+      - run: dbt deps
+      - run: dbt build --target prod
+      - run: dbt docs generate --target prod
 
       - name: Source freshness (non-blocking)
         continue-on-error: true
