@@ -5,7 +5,6 @@ on:
     types: [closed]
     branches: [main]
 
-# Own group, so cleanup is never cancelled by (or cancels) a CI run
 concurrency:
   group: dbt-ci-cleanup-${{ github.event.pull_request.number }}
   cancel-in-progress: false
@@ -38,17 +37,16 @@ jobs:
           set -uo pipefail
           prefix="ci_pr_${PR}"
 
-          # Warm up bq so any first-run message doesn't pollute the JSON
-          bq ls --project_id="$PROJECT" --max_results=1 > /dev/null 2>&1 || true
-
-          if ! bq ls -d --project_id="$PROJECT" --max_results=1000 --format=json > datasets.json 2> bq_err.txt; then
+          if ! bq ls -d --project_id="$PROJECT" --max_results=1000 --format=csv > datasets.txt 2> bq_err.txt; then
             echo "bq ls failed:"
             cat bq_err.txt
             exit 1
           fi
 
-          datasets=$(jq -r --arg p "$prefix" \
-            '.[]? | .datasetReference.datasetId | select(. == $p or startswith($p + "_"))' datasets.json)
+          echo "bq output (for debugging):"
+          cat datasets.txt
+
+          datasets=$(tr -d '\r' < datasets.txt | grep -E "^${prefix}(_[A-Za-z0-9_]+)?$" || true)
 
           if [ -z "$datasets" ]; then
             echo "No datasets found for ${prefix}"
