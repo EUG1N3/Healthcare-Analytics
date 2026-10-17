@@ -23,9 +23,17 @@ jobs:
       GCP_PROJECT_ID: ${{ vars.GCP_PROD_PROJECT_ID }}
       DBT_DATASET: ${{ vars.DBT_PROD_DATASET }}
       BQ_LOCATION: ${{ vars.BQ_LOCATION }}
+      DBT_PROJECT_DIR: ${{ github.workspace }}/healthcare_analysis
+      DBT_PROFILES_DIR: ${{ github.workspace }}/healthcare_analysis
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Debug layout (remove once green)
+        run: |
+          pwd
+          ls -la
+          ls -la healthcare_analysis
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,34 +44,35 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Show dbt version
+        run: dbt --version
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_PROD_SERVICE_ACCOUNT }}
 
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: dbt deps
         run: dbt deps
 
       - name: dbt build
-        run: dbt build --target prod --profiles-dir .
+        run: dbt build --target prod
 
       - name: dbt docs generate
-        run: dbt docs generate --target prod --profiles-dir .
+        run: dbt docs generate --target prod
 
       - name: Source freshness (non-blocking)
         continue-on-error: true
-        run: dbt source freshness --target prod --profiles-dir .
+        run: dbt source freshness --target prod
 
       - name: Upload docs artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dbt-docs
           path: |
-            target/index.html
-            target/manifest.json
-            target/catalog.json
+            healthcare_analysis/target/index.html
+            healthcare_analysis/target/manifest.json
+            healthcare_analysis/target/catalog.json
           if-no-files-found: warn
