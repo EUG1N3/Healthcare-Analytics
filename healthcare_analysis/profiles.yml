@@ -1,0 +1,32 @@
+healthcare_analysis:
+  outputs:
+    eugene_dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'healthcare-analytics-510014') }}"
+      dataset: "{{ env_var('DBT_DATASET', 'eugene_dev') }}"
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      priority: interactive
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+
+    ci:
+      type: bigquery
+      method: oauth 
+      project: "{{ env_var('GCP_PROJECT_ID', 'healthcare-analytics-ci') }}"
+      dataset: "{{ env_var('DBT_DATASET', 'dbt_ci') }}" 
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: 4
+      maximum_bytes_billed: 10000000000  
+
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID', 'healthcare-analytics-510014') }}"
+      dataset: "{{ env_var('DBT_DATASET', 'silver') }}"
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      priority: interactive
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+
+  target: eugene_dev
