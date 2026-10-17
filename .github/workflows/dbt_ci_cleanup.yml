@@ -5,10 +5,10 @@ on:
     types: [closed]
     branches: [main]
 
-# Same group as the CI workflow: closing the PR cancels any in-flight CI run
+# Own group, so cleanup is never cancelled by (or cancels) a CI run
 concurrency:
-  group: dbt-ci-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: dbt-ci-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -35,13 +35,20 @@ jobs:
 
       - name: Drop this PR's datasets
         run: |
-          set -euo pipefail
+          set -uo pipefail
           prefix="ci_pr_${PR}"
 
-          datasets=$(bq ls -d --project_id="$PROJECT" --max_results=1000 --format=json \
-            | jq -r --arg p "$prefix" \
-                '.[]?.datasetReference.datasetId
-                 | select(. == $p or startswith($p + "_"))')
+          # Warm up bq so any first-run message doesn't pollute the JSON
+          bq ls --project_id="$PROJECT" --max_results=1 > /dev/null 2>&1 || true
+
+          if ! bq ls -d --project_id="$PROJECT" --max_results=1000 --format=json > datasets.json 2> bq_err.txt; then
+            echo "bq ls failed:"
+            cat bq_err.txt
+            exit 1
+          fi
+
+          datasets=$(jq -r --arg p "$prefix" \
+            '.[]? | .datasetReference.datasetId | select(. == $p or startswith($p + "_"))' datasets.json)
 
           if [ -z "$datasets" ]; then
             echo "No datasets found for ${prefix}"
