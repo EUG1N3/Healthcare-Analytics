@@ -33,6 +33,7 @@ jobs:
 
       - name: Debug layout (remove once green)
         run: |
+          echo "Workflow: dbt CI"
           pwd
           ls -la
           ls -la healthcare_analysis
@@ -56,7 +57,7 @@ jobs:
           service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
 
       - name: dbt deps
-        run: dbt deps
+        run: dbt deps --project-dir healthcare_analysis --profiles-dir healthcare_analysis
 
       - name: Lint changed SQL
         working-directory: healthcare_analysis
@@ -71,4 +72,4 @@ jobs:
           fi
 
       - name: dbt build and test
-        run: dbt build --target ci
+        run: dbt build --target ci --project-dir healthcare_analysis --profiles-dir healthcare_analysis
